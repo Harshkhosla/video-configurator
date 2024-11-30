@@ -1,5 +1,5 @@
 import mongoose from "mongoose"
-const mongoURI = 'mongodb+srv://harsh:Harsh9945khosla@cluster0.osfevs6.mongodb.net/vide-backend'
+const mongoURI = 'mongodb+srv://harsh:Harsh9945khosla@cluster0.osfevs6.mongodb.net/video-backend'
 
 const Database =async ()=>{
     try{
