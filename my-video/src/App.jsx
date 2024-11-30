@@ -23,6 +23,8 @@ function App() {
   };
 
 
+
+
   const handleDrop = (event) => {
     event.preventDefault();
     const file = event.dataTransfer.files[0];
@@ -76,6 +78,7 @@ function App() {
       toast.error('Please select a video file.');
       return;
     }
+    
     if (annotations.length === 0) {
       toast.error('Please add annotations.');
       return;
@@ -142,11 +145,15 @@ function App() {
         </div>
       )}
 
+    
+<form >
       <div className="mt-4">
         <select
           value={annotationType}
           onChange={(e) => setAnnotationType(e.target.value)}
-          className="border p-2"
+          // className="border p-2"
+           className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          required
         >
           <option value="">Select Annotation Type</option>
           <option value="question">Question</option>
@@ -158,22 +165,44 @@ function App() {
           placeholder="Enter annotation content"
           value={currentAnnotation}
           onChange={(e) => setCurrentAnnotation(e.target.value)}
-          className="border p-2 mx-2"
+          // className="border p-2 mx-2"
+           className="border mx-2 border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          required
         />
         <input
           type="number"
           placeholder="Enter timestamp (seconds)"
           value={videoTimestamp}
           onChange={(e) => setVideoTimestamp(e.target.value)}
-          className="border p-2"
+          // className="border p-2"
+          className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          required
         />
         <button
+          type='submit'
           onClick={handleAddAnnotation}
-          className="bg-blue-500 text-white p-2 ml-2"
-        >
+          // className="bg-blue-500 text-white p-2 ml-2"
+          // className={`p-2 ml-2 rounded-lg ${
+          //   annotationType && currentAnnotation && videoTimestamp
+          //     ? "bg-blue-500 text-white"
+          //     : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          // }`}
+
+          className={`py-2 px-4 ml-2 rounded-lg text-white font-semibold ${
+            annotationType && currentAnnotation && videoTimestamp
+              ? "bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:ring-blue-300"
+              : "bg-gray-300 cursor-not-allowed"
+          }`}
+          disabled={!(annotationType && currentAnnotation && videoTimestamp)}
+      >
           Add Annotation
         </button>
       </div>
+      </form>
+
+
+
+      
       <div className="w-full max-w-3xl mb-5">
         <h3 className="text-xl font-bold mb-2">Annotations:</h3>
         {annotations.map((annotation, index) => (

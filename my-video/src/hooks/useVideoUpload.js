@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { API_URL } from '../config/apiConfig';
 
 const useVideoUpload = () => {
   const [loading, setLoading] = useState(false);
@@ -18,11 +17,12 @@ const useVideoUpload = () => {
     formData.append('annotations', JSON.stringify(annotations));
 
     try {
-      const response = await axios.post(`${API_URL}/upload`, formData, {
+      const response = await axios.post('http://localhost:5100/api/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
+
       if (response.status === 201) {
         toast.success('Video uploaded successfully');
         setSuccess(true);

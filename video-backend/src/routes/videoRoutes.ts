@@ -46,25 +46,12 @@ router.get('/videos', async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Error fetching videos', error });
     }
 });
-// @ts-ignore
-router.put('/annotation/:videoId/:annotationId', async (req: Request, res: Response) => {
-    try {
-        const { videoId, annotationId } = req.params;
-        const { answered } = req.body; 
 
-        const video = await Video.findById(videoId);
-        if (!video) return res.status(404).json({ message: 'Video not found' });
-        // @ts-ignore
-        const annotation = video.annotations.id(annotationId);
-        if (!annotation) return res.status(404).json({ message: 'Annotation not found' });
 
-        annotation.answered = answered;
-        await video.save();
 
-        res.status(200).json({ message: 'Annotation updated successfully', annotation });
-    } catch (error) {
-        res.status(500).json({ message: 'Error updating annotation', error });
-    }
-});
+
+
+
+
 const VideoRouter = router;
 export default VideoRouter;
