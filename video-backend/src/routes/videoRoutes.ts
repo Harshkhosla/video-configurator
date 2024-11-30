@@ -12,22 +12,29 @@ const upload = multer({ storage: multerConfig });
 // @ts-ignore
 router.post('/upload', upload.single('video'), async (req: Request, res: Response) => {
     try {
-        if (!req.file) {
-            return res.status(400).json({ message: 'No video file uploaded' });
-        }
+        console.log(req.body.annotations,"sdvlkljvdnkjvdnsjkvnsdjk");
+        
+      if (!req.file) {
+        return res.status(400).json({ error: 'No video file uploaded.' });
+      }
 
-        const newVideo = new Video({
-            fileUrl: req.file.path, 
-            annotations: [] 
-        });
 
-        await newVideo.save();  
-        res.status(200).json({ message: 'Video uploaded successfully', video: newVideo });
+      const annotations = JSON.parse(req.body.annotations);
+    //   const { annotations } = req.body;
+  
+      const newVideo: IVideo = new Video({
+        fileUrl: `/uploads/videos/${req.file.filename}`,
+        annotations: (annotations || '[]'), 
+          });
+  
+      await newVideo.save();
+  
+      res.status(201).json({ message: 'Video uploaded successfully!', video: newVideo });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Error uploading video' });
+      console.error(error);
+      res.status(500).json({ error: 'Failed to upload video.' });
     }
-});
+  });
 
 
 

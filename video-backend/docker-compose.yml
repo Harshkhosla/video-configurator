@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  backend:
+    build: .
+    ports:
+      - "5100:5100"
+    volumes:
+      - .:/app
+    environment:
+      - NODE_ENV=development
+    command: npm run dev

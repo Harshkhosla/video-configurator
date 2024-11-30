@@ -1,42 +1,34 @@
 import React, { useState, useRef, useEffect } from 'react';
-
+import axios from "axios"
 function App() {
-  const [videoFile, setVideoFile] = useState(null);  
-  const [annotations, setAnnotations] = useState([]);  
-  const [annotationType, setAnnotationType] = useState('');  
-  const [currentAnnotation, setCurrentAnnotation] = useState('');  
-  const [videoTimestamp, setVideoTimestamp] = useState('');  
-  const [modalOpen, setModalOpen] = useState(false);  
-  const [videoPaused, setVideoPaused] = useState(false);  
-  const [currentQuestionAnswer, setCurrentQuestionAnswer] = useState(''); 
+  const [videoFile, setVideoFile] = useState(null);
+  const [videoFilebolb, setVideoFilebolb] = useState(null);
+  const [annotations, setAnnotations] = useState([]);
+  const [annotationType, setAnnotationType] = useState('');
+  const [currentAnnotation, setCurrentAnnotation] = useState('');
+  const [videoTimestamp, setVideoTimestamp] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [videoPaused, setVideoPaused] = useState(false);
+  const [currentQuestionAnswer, setCurrentQuestionAnswer] = useState('');
 
-  const videoRef = useRef(null);  
+
+  const videoRef = useRef(null);
   const handleDragOver = (event) => {
     event.preventDefault();
     if (!dragging) setDragging(true);
   };
 
-  const handleVideoUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setVideoFile(URL.createObjectURL(file));
-    }
-  };
-  const handleFileChange = (event) => {
-    const file = event.target.files[0] || event.dataTransfer.files[0];
-    if (file && file.type.startsWith('video/')) {
-      setVideoFile(URL.createObjectURL(file));
-    } else {
-      alert("Please select a valid video file.");
-    }
-  };
+
+
+
   const handleDrop = (event) => {
     event.preventDefault();
     const file = event.dataTransfer.files[0];
     if (file && file.type.startsWith('video/')) {
       setVideoFile(URL.createObjectURL(file));
+      setVideoFilebolb(file)
       console.log(videoFile);
-      
+
     } else {
       alert('Please drop a valid video file.');
     }
@@ -44,16 +36,22 @@ function App() {
   };
 
 
+
+
+
   const handleAddAnnotation = () => {
     const newAnnotation = {
-      type: annotationType,  
+      type: annotationType,
       content: currentAnnotation,
-      timestamp: parseInt(videoTimestamp, 10),  
+      timestamp: parseInt(videoTimestamp, 10),
     };
     setAnnotations([...annotations, newAnnotation]);
     setCurrentAnnotation('');
     setVideoTimestamp('');
   };
+
+
+
 
   const handleVideoTimeUpdate = () => {
     const currentTime = videoRef.current.currentTime;
@@ -69,9 +67,37 @@ function App() {
     });
   };
 
+
+
+
+
+  const handleVideoUpload = async (e) => {
+    if (!videoFilebolb) {
+      alert("Please select a file first.");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("video", videoFilebolb);
+    formData.append("annotations", JSON.stringify(annotations));
+
+    try {
+      const response = await axios.post("http://localhost:5100/api/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      console.log("File uploaded successfully", response.data);
+
+      alert('Video and annotations uploaded successfully!');
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    }
+  };
+
+ 
   const handleSubmitAnswer = () => {
     setModalOpen(false);
-    setVideoPaused(false); 
+    setVideoPaused(false);
     videoRef.current.currentTime += 1;
     if (videoRef.current) videoRef.current.play();
   };
@@ -87,21 +113,15 @@ function App() {
   return (
     <div className="flex flex-col items-center p-5">
       <div className="mb-4">
-        {/* <input
-          type="file"
-          accept="video/*"
-          onChange={handleVideoUpload}
-          className="p-2 border border-gray-300 rounded"
-        /> */}
-            <div
-        className="video-upload-area"
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        onChange={handleFileChange}
-        style={{ border: '2px dashed #ccc', padding: '10px', textAlign: 'center', marginBottom: '20px' }}
-      >
-        <p>Drag & Drop a video file here</p>
-      </div>
+     
+        <div
+          className="video-upload-area"
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          style={{ border: '2px dashed #ccc', padding: '60px', textAlign: 'center', marginBottom: '20px' }}
+        >
+          <p>Drag & Drop a video file here</p>
+        </div>
       </div>
 
       {videoFile && (
@@ -120,7 +140,7 @@ function App() {
                   key={index}
                   className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-black text-white px-4 py-2 rounded"
                   style={{
-                    top: `${(annotation.timestamp / 60) * 100}%`, // Basic timestamp calculation for position
+                    top: `${(annotation.timestamp / 60) * 100}%`, 
                   }}
                 >
                   {annotation.content}
@@ -176,8 +196,8 @@ function App() {
             </p>
           </div>
         ))}
+        <button className='px-2 py-4 bg-green-300 rounded-2xl' onClick={handleVideoUpload}>Upload Video</button>
       </div>
-
       {modalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-6 rounded-lg w-1/3">
