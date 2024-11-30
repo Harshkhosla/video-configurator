@@ -1,18 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
-import './App.css'; // Tailwind CSS or custom styles
+import './App.css'; // Make sure Tailwind CSS or your custom CSS is linked
 
 function App() {
-  const [videoFile, setVideoFile] = useState(null);
-  const [annotations, setAnnotations] = useState([]);
-  const [annotationType, setAnnotationType] = useState('');
-  const [currentAnnotation, setCurrentAnnotation] = useState('');
-  const [timestamp, setTimestamp] = useState('');
-  const [isPaused, setIsPaused] = useState(false);
-  const [showQuestionModal, setShowQuestionModal] = useState(false);
-  const [userAnswer, setUserAnswer] = useState('');
-  const videoRef = useRef(null);
+  const [videoFile, setVideoFile] = useState(null);  // Holds the video file
+  const [annotations, setAnnotations] = useState([]);  // Stores annotation objects (timestamps + content)
+  const [annotationType, setAnnotationType] = useState('');  // Stores selected annotation type (question, feedback, etc.)
+  const [currentAnnotation, setCurrentAnnotation] = useState('');  // Holds the current annotation's content
+  const [videoTimestamp, setVideoTimestamp] = useState('');  // Timestamp for annotation
+  const [modalOpen, setModalOpen] = useState(false);  // Controls visibility of the modal
+  const [videoPaused, setVideoPaused] = useState(false);  // Controls whether the video is paused
+  const [currentQuestionAnswer, setCurrentQuestionAnswer] = useState('');  // For storing the answer for questions
 
-  // Handle video file input
+  const videoRef = useRef(null);  // Reference to the video element for playback control
+
+  // Handle video file upload
   const handleVideoUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -20,142 +21,155 @@ function App() {
     }
   };
 
-  // Handle adding annotations (prompt or question)
+  // Adding an annotation (question/feedback)
   const handleAddAnnotation = () => {
     const newAnnotation = {
-      type: annotationType,
-      text: currentAnnotation,
-      timestamp: parseFloat(timestamp),
+      type: annotationType,  // question or feedback
+      content: currentAnnotation,
+      timestamp: parseInt(videoTimestamp, 10),  // Timestamp when this annotation should show
     };
-    setAnnotations((prev) => [...prev, newAnnotation]);
+    setAnnotations([...annotations, newAnnotation]);
     setCurrentAnnotation('');
-    setTimestamp('');
+    setVideoTimestamp('');
   };
 
-  // Handle video time updates
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      const currentTime = videoRef.current.currentTime;
-      annotations.forEach((annotation) => {
-        if (currentTime >= annotation.timestamp && !annotation.shown) {
-          if (annotation.type === 'question') {
-            // Pause video for questions and show modal
-            setIsPaused(true);
-            setShowQuestionModal(true);
-          }
-          // Mark prompt as shown
-          annotation.shown = true;
+  // Play or pause the video at specific timestamps based on annotations
+  const handleVideoTimeUpdate = () => {
+    const currentTime = videoRef.current.currentTime;
+    // Check if there are any annotations at this timestamp
+    annotations.forEach((annotation) => {
+      if (currentTime >= annotation.timestamp && currentTime < annotation.timestamp + 1) {
+        if (annotation.type === 'question') {
+          setModalOpen(true);
+          setVideoPaused(true);
+        } else if (annotation.type === 'feedback') {
+          // For feedback, show the feedback without pausing the video
+          alert(`Feedback: ${annotation.content}`);
         }
-      });
-    }
-  };
-
-  // Handle question submission
-  const handleQuestionSubmit = () => {
-    setShowQuestionModal(false);
-    setIsPaused(false);
-    setUserAnswer('');
-    videoRef.current.play();
-  };
-
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.addEventListener('timeupdate', handleTimeUpdate);
-    }
-    return () => {
-      if (videoRef.current) {
-        videoRef.current.removeEventListener('timeupdate', handleTimeUpdate);
       }
-    };
-  }, [annotations]);
+    });
+  };
+
+  const handleSubmitAnswer = () => {
+    setModalOpen(false);
+    setVideoPaused(false); // Unpause video
+    videoRef.current.currentTime += 1;
+    if (videoRef.current) videoRef.current.play();
+  };
+
+  // Handle the video pause/resume
+  useEffect(() => {
+    if (videoPaused && videoRef.current) {
+      videoRef.current.pause();
+    } else {
+      if (videoRef.current) videoRef.current.play();
+    }
+  }, [videoPaused]);
 
   return (
-    <div className="flex flex-col items-center p-5">
-      {/* Video Upload */}
-      <div className="mb-5">
+    <div className="container mx-auto p-4">
+      {/* Video Upload Section */}
+      <div className="mb-4">
         <input
           type="file"
           accept="video/*"
           onChange={handleVideoUpload}
-          className="p-2 border border-gray-300 rounded"
+          className="border p-2"
         />
       </div>
 
       {/* Video Player */}
       {videoFile && (
-        <div className="mb-5">
+        <div className="relative">
           <video
             ref={videoRef}
             src={videoFile}
             controls
-            className="w-full max-w-3xl"
-            paused={isPaused}
-            onPlay={() => setIsPaused(false)}
-          />
+            className="w-full h-auto"
+            onTimeUpdate={handleVideoTimeUpdate}
+          ></video>
+          {/* Display Prompts Above Video */}
+          {annotations.map((annotation, index) => {
+            if (annotation.type === 'prompt') {
+              return (
+                <div
+                  key={index}
+                  className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-black text-white px-4 py-2 rounded"
+                  style={{
+                    top: `${(annotation.timestamp / 60) * 100}%`, // Basic timestamp calculation for position
+                  }}
+                >
+                  {annotation.content}
+                </div>
+              );
+            }
+            return null;
+          })}
         </div>
       )}
 
-      {/* Annotation Form */}
-      <div className="mb-5">
+      {/* Annotation Controls */}
+      <div className="mt-4">
         <select
           value={annotationType}
           onChange={(e) => setAnnotationType(e.target.value)}
-          className="p-2 border border-gray-300 rounded mr-3"
+          className="border p-2"
         >
           <option value="">Select Annotation Type</option>
-          <option value="prompt">Prompt</option>
           <option value="question">Question</option>
+          <option value="feedback">Feedback</option>
+          <option value="prompt">Prompt</option>
         </select>
         <input
           type="text"
+          placeholder="Enter annotation content"
           value={currentAnnotation}
           onChange={(e) => setCurrentAnnotation(e.target.value)}
-          placeholder="Enter Annotation"
-          className="p-2 border border-gray-300 rounded mr-3"
+          className="border p-2 mx-2"
         />
         <input
           type="number"
-          value={timestamp}
-          onChange={(e) => setTimestamp(e.target.value)}
-          placeholder="Timestamp in seconds"
-          className="p-2 border border-gray-300 rounded"
+          placeholder="Enter timestamp (seconds)"
+          value={videoTimestamp}
+          onChange={(e) => setVideoTimestamp(e.target.value)}
+          className="border p-2"
         />
         <button
           onClick={handleAddAnnotation}
-          className="p-2 bg-blue-500 text-white rounded ml-3"
+          className="bg-blue-500 text-white p-2 ml-2"
         >
           Add Annotation
         </button>
       </div>
-
-      {/* Annotation Preview List */}
       <div className="w-full max-w-3xl mb-5">
         <h3 className="text-xl font-bold mb-2">Annotations:</h3>
         {annotations.map((annotation, index) => (
           <div key={index} className="mb-2">
             <p>
-              <strong>{annotation.type === 'question' ? 'Question' : 'Prompt'}:</strong> {annotation.text} <strong>at</strong> {annotation.timestamp}s
+              <div key={index} className="p-2 bg-black bg-opacity-50 text-white rounded mb-2">
+                <strong>{annotation.type === 'question' ? 'Question' : annotation.type === 'prompt' ? 'Prompt' : 'Feedback'}:</strong> {annotation.content}
+                <strong> at </strong>{annotation.timestamp}s
+              </div>
             </p>
           </div>
         ))}
       </div>
 
-      {/* Question Modal */}
-      {showQuestionModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg w-1/3">
-            <h2 className="text-xl font-bold mb-4">Question:</h2>
-            <p className="mb-4">What is your answer to the question?</p>
+      {/* Modal for Question */}
+      {modalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-lg w-1/3">
+            <h2 className="text-xl mb-4">Please answer the question</h2>
+            <p>{annotations.find((annotation) => annotation.type === 'question')?.content}</p>
             <input
               type="text"
-              value={userAnswer}
-              onChange={(e) => setUserAnswer(e.target.value)}
-              className="p-2 border border-gray-300 rounded mb-4 w-full"
-              placeholder="Your answer..."
+              value={currentQuestionAnswer}
+              onChange={(e) => setCurrentQuestionAnswer(e.target.value)}
+              className="border p-2 w-full mt-2"
             />
             <button
-              onClick={handleQuestionSubmit}
-              className="p-2 bg-green-500 text-white rounded w-full"
+              onClick={handleSubmitAnswer}
+              className="bg-green-500 text-white p-2 mt-4"
             >
               Submit Answer
             </button>
