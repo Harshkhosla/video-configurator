@@ -1,0 +1,1 @@
+{"root":["./src/index.ts","./src/db/db.ts","./src/models/video.ts","./src/routes/videoroutes.ts","./src/services/videoservice.ts","./src/utils/multerconfig.ts"],"version":"5.7.2"}

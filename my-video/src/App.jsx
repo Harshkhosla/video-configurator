@@ -1,49 +1,68 @@
 import React, { useState, useRef, useEffect } from 'react';
-import './App.css'; // Make sure Tailwind CSS or your custom CSS is linked
 
 function App() {
-  const [videoFile, setVideoFile] = useState(null);  // Holds the video file
-  const [annotations, setAnnotations] = useState([]);  // Stores annotation objects (timestamps + content)
-  const [annotationType, setAnnotationType] = useState('');  // Stores selected annotation type (question, feedback, etc.)
-  const [currentAnnotation, setCurrentAnnotation] = useState('');  // Holds the current annotation's content
-  const [videoTimestamp, setVideoTimestamp] = useState('');  // Timestamp for annotation
-  const [modalOpen, setModalOpen] = useState(false);  // Controls visibility of the modal
-  const [videoPaused, setVideoPaused] = useState(false);  // Controls whether the video is paused
-  const [currentQuestionAnswer, setCurrentQuestionAnswer] = useState('');  // For storing the answer for questions
+  const [videoFile, setVideoFile] = useState(null);  
+  const [annotations, setAnnotations] = useState([]);  
+  const [annotationType, setAnnotationType] = useState('');  
+  const [currentAnnotation, setCurrentAnnotation] = useState('');  
+  const [videoTimestamp, setVideoTimestamp] = useState('');  
+  const [modalOpen, setModalOpen] = useState(false);  
+  const [videoPaused, setVideoPaused] = useState(false);  
+  const [currentQuestionAnswer, setCurrentQuestionAnswer] = useState(''); 
 
-  const videoRef = useRef(null);  // Reference to the video element for playback control
+  const videoRef = useRef(null);  
+  const handleDragOver = (event) => {
+    event.preventDefault();
+    if (!dragging) setDragging(true);
+  };
 
-  // Handle video file upload
   const handleVideoUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
       setVideoFile(URL.createObjectURL(file));
     }
   };
+  const handleFileChange = (event) => {
+    const file = event.target.files[0] || event.dataTransfer.files[0];
+    if (file && file.type.startsWith('video/')) {
+      setVideoFile(URL.createObjectURL(file));
+    } else {
+      alert("Please select a valid video file.");
+    }
+  };
+  const handleDrop = (event) => {
+    event.preventDefault();
+    const file = event.dataTransfer.files[0];
+    if (file && file.type.startsWith('video/')) {
+      setVideoFile(URL.createObjectURL(file));
+      console.log(videoFile);
+      
+    } else {
+      alert('Please drop a valid video file.');
+    }
+    setDragging(false);
+  };
 
-  // Adding an annotation (question/feedback)
+
   const handleAddAnnotation = () => {
     const newAnnotation = {
-      type: annotationType,  // question or feedback
+      type: annotationType,  
       content: currentAnnotation,
-      timestamp: parseInt(videoTimestamp, 10),  // Timestamp when this annotation should show
+      timestamp: parseInt(videoTimestamp, 10),  
     };
     setAnnotations([...annotations, newAnnotation]);
     setCurrentAnnotation('');
     setVideoTimestamp('');
   };
 
-  // Play or pause the video at specific timestamps based on annotations
   const handleVideoTimeUpdate = () => {
     const currentTime = videoRef.current.currentTime;
-    // Check if there are any annotations at this timestamp
     annotations.forEach((annotation) => {
       if (currentTime >= annotation.timestamp && currentTime < annotation.timestamp + 1) {
         if (annotation.type === 'question') {
           setModalOpen(true);
           setVideoPaused(true);
         } else if (annotation.type === 'feedback') {
-          // For feedback, show the feedback without pausing the video
           alert(`Feedback: ${annotation.content}`);
         }
       }
@@ -52,12 +71,11 @@ function App() {
 
   const handleSubmitAnswer = () => {
     setModalOpen(false);
-    setVideoPaused(false); // Unpause video
+    setVideoPaused(false); 
     videoRef.current.currentTime += 1;
     if (videoRef.current) videoRef.current.play();
   };
 
-  // Handle the video pause/resume
   useEffect(() => {
     if (videoPaused && videoRef.current) {
       videoRef.current.pause();
@@ -67,28 +85,34 @@ function App() {
   }, [videoPaused]);
 
   return (
-    <div className="container mx-auto p-4">
-      {/* Video Upload Section */}
+    <div className="flex flex-col items-center p-5">
       <div className="mb-4">
-        <input
+        {/* <input
           type="file"
           accept="video/*"
           onChange={handleVideoUpload}
-          className="border p-2"
-        />
+          className="p-2 border border-gray-300 rounded"
+        /> */}
+            <div
+        className="video-upload-area"
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        onChange={handleFileChange}
+        style={{ border: '2px dashed #ccc', padding: '10px', textAlign: 'center', marginBottom: '20px' }}
+      >
+        <p>Drag & Drop a video file here</p>
+      </div>
       </div>
 
-      {/* Video Player */}
       {videoFile && (
-        <div className="relative">
+        <div className="relative flex justify-center">
           <video
             ref={videoRef}
             src={videoFile}
             controls
-            className="w-full h-auto"
+            className="w-1/2 h-1/2"
             onTimeUpdate={handleVideoTimeUpdate}
           ></video>
-          {/* Display Prompts Above Video */}
           {annotations.map((annotation, index) => {
             if (annotation.type === 'prompt') {
               return (
@@ -108,7 +132,6 @@ function App() {
         </div>
       )}
 
-      {/* Annotation Controls */}
       <div className="mt-4">
         <select
           value={annotationType}
@@ -155,7 +178,6 @@ function App() {
         ))}
       </div>
 
-      {/* Modal for Question */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-6 rounded-lg w-1/3">
