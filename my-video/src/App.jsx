@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from "axios"
 import toast from 'react-hot-toast';
+import useVideoUpload from "./hooks/useVideoUpload";
+
 function App() {
   const [videoFile, setVideoFile] = useState(null);
   const [videoFilebolb, setVideoFilebolb] = useState(null);
@@ -12,14 +14,13 @@ function App() {
   const [videoPaused, setVideoPaused] = useState(false);
   const [currentQuestionAnswer, setCurrentQuestionAnswer] = useState('');
 
+  const { uploadVideo, isUploading, uploadProgress } = useVideoUpload();
 
   const videoRef = useRef(null);
   const handleDragOver = (event) => {
     event.preventDefault();
     if (!dragging) setDragging(true);
   };
-
-
 
 
   const handleDrop = (event) => {
@@ -70,30 +71,18 @@ function App() {
 
 
 
-
-
-  const handleVideoUpload = async (e) => {
+  const handleVideoUpload = async () => {
     if (!videoFilebolb) {
-      alert("Please select a file first.");
+      toast.error('Please select a video file.');
       return;
     }
-    const formData = new FormData();
-    formData.append("video", videoFilebolb);
-    formData.append("annotations", JSON.stringify(annotations));
-
-    try {
-      const response = await axios.post("http://localhost:5100/api/upload", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      console.log("File uploaded successfully", response.data);
-      toast.success('File uploaded successfully!')
-      // alert('Video and annotations uploaded successfully!');
-    } catch (error) {
-      console.error("Error uploading file:", error);
+    if (annotations.length === 0) {
+      toast.error('Please add annotations.');
+      return;
     }
+    await uploadVideo(videoFilebolb, annotations);
   };
+
 
  
   const handleSubmitAnswer = () => {

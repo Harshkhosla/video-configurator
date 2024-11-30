@@ -10,7 +10,6 @@ const Database =async ()=>{
         console.error('Error connecting to MongoDB:', e);
     
     }
-
 }
 
 export const ConnectToMongo = Database;
