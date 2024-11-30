@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from "axios"
+import toast from 'react-hot-toast';
 function App() {
   const [videoFile, setVideoFile] = useState(null);
   const [videoFilebolb, setVideoFilebolb] = useState(null);
@@ -87,8 +88,8 @@ function App() {
         },
       });
       console.log("File uploaded successfully", response.data);
-
-      alert('Video and annotations uploaded successfully!');
+      toast.success('File uploaded successfully!')
+      // alert('Video and annotations uploaded successfully!');
     } catch (error) {
       console.error("Error uploading file:", error);
     }
