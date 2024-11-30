@@ -1,33 +1,15 @@
-import React, { useState } from "react";
-import ReactPlayer from "react-player";
+import React from 'react';
 
-const VideoPlayer = ({ videoUrl, onVideoPause, injectedData }) => {
-  const [currentTime, setCurrentTime] = useState(0);
-  const [playing, setPlaying] = useState(false);
-
-  const handlePause = (time) => {
-    setCurrentTime(time);
-    onVideoPause(time); // Notify parent component to inject data at this time
-  };
-
+const VideoPlayer = ({ videoFile, videoRef, handleVideoTimeUpdate }) => {
   return (
-    <div>
-      <ReactPlayer
-        url={videoUrl}
-        playing={playing}
-        onPause={() => handlePause(currentTime)}
-        onProgress={({ playedSeconds }) => setCurrentTime(playedSeconds)}
+    <div className="relative">
+      <video
+        ref={videoRef}
+        src={videoFile}
         controls
-      />
-      <button onClick={() => setPlaying(!playing)}>{playing ? "Pause" : "Play"}</button>
-
-      {/* Show injected data */}
-      {injectedData && injectedData[currentTime] && (
-        <div>
-          <h3>{injectedData[currentTime].title}</h3>
-          <p>{injectedData[currentTime].content}</p>
-        </div>
-      )}
+        className="w-full h-auto"
+        onTimeUpdate={handleVideoTimeUpdate}
+      ></video>
     </div>
   );
 };
